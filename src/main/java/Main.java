@@ -1,4 +1,3 @@
-import com.google.gson.JsonNull;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,8 +22,8 @@ public class Main extends ListenerAdapter {
     public static JsonObject history = new JsonObject();
 
     public static void main(String[] args) {
-        String token = "MTEyMDY5NDUzOTUxNTA4ODk1Ng.GM5mqa.YrClgY1d4ZMPatpq4ITusotBHMVI5JmreU1l9Y";
-        JDABuilder builder = JDABuilder.createDefault(token);
+        DiscordBotToken discordBotToken = new DiscordBotToken();
+        JDABuilder builder = JDABuilder.createDefault(discordBotToken.getDiscordBotToken());
         builder.enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT);
         JDA jda = builder.build();
         jda.addEventListener(new Main());
@@ -42,7 +41,6 @@ public class Main extends ListenerAdapter {
             Message message = event.getMessage();
             String content = message.getContentRaw();
             if (content.equals("! 전적")) {
-                // TODO 전적 출력
                 if (history.has("gameCount")) {
                     int gameCount = history.get("gameCount").getAsInt();
                     channel.sendMessage("오늘 총 게임 수 : " + gameCount + " 판").queue();
@@ -58,7 +56,15 @@ public class Main extends ListenerAdapter {
                 } else {
                     channel.sendMessage("아직 전적이 없습니다!").complete();
                 }
-            } else if (content.contains("! 승패")) {
+            } else if (content.equals("help") || content.equals("!help")) {
+                channel.sendMessage("팀 balance = ! 이름,이름/.../이름,이름").queue();
+                channel.sendMessage("팀 확인 = ! 팀").queue();
+                channel.sendMessage("전적 저장 = ! 승패 팀(1 or 2) 승").queue();
+                channel.sendMessage("전적 불러오기 = ! 전적").queue();
+            } else if (content.equals("! 전적 초기화")) {
+                history = new JsonObject();
+                channel.sendMessage("전적 초기화 하였습니다. ").queue();
+            } else if (content.startsWith("! 승패")) {
                 Pattern pattern = Pattern.compile("! 승패 팀(\\d) *승");
                 Matcher matcher = pattern.matcher(content);
                 if (team1.size() == 0 || team2.size() == 0) {

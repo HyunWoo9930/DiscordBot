@@ -14,7 +14,9 @@ build/
 *.ipr
 out/
 !**/src/main/**/out/
+!**/src/main/java/DiscordBotToken
 !**/src/test/**/out/
+
 
 ### Eclipse ###
 .apt_generated
