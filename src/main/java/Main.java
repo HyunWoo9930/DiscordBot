@@ -1,3 +1,10 @@
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Message;
@@ -6,10 +13,6 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 
 public class Main extends ListenerAdapter {
 
@@ -17,7 +20,7 @@ public class Main extends ListenerAdapter {
     public static List<String> team2 = new ArrayList<>();
 
     public static void main(String[] args) {
-        String token = "MTEyMDY5NDUzOTUxNTA4ODk1Ng.Gg5tZx.UaMSY0Wl2uJJ4d49vEUPukzF9XdV8Lipkjn4f4";
+        String token = "MTEyMDY5NDUzOTUxNTA4ODk1Ng.GLDLEj.x1aHyC_ig2ERi57iM0HHHbcbHPRPxqzbW38imw";
         JDABuilder builder = JDABuilder.createDefault(token);
         builder.enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT);
         JDA jda = builder.build();
@@ -27,53 +30,59 @@ public class Main extends ListenerAdapter {
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         if (event.isFromGuild()) {
-            if (!event.getChannel().asTextChannel().getType().isGuild()) return;
-
+            if (!event.getChannel().asTextChannel().getType().isGuild()) {
+                return;
+            }
 
             TextChannel channel = event.getChannel().asTextChannel();
 
             Message message = event.getMessage();
             String content = message.getContentRaw();
-
-            //TODO !칼바람 팀짜기 4 (오현우,이동재/이승서,탁기훈/박예준,세영/한세웅,이상우) 에서 칼바람 팀짜기 제거
-            if(content.startsWith("!칼바람 팀짜기 ")) {
-
-
-                Pattern pattern = Pattern.compile("!칼바람 팀짜기 (\\d*) *\\((.*)\\)");
+            if (content.contains("전적")) {
+                channel.sendMessage("아직 구현되지 않았습니다!").queue();
+            } else if (content.contains("! 승패")) {
+                System.out.println("content = " + content);
+                Pattern pattern = Pattern.compile("! 승패 팀(\\d) *승");
                 Matcher matcher = pattern.matcher(content);
-
-                Map<Integer, List<String>> balanceMap = new HashMap<>();
-                int team = 0;
-                String teamMember = "";
-
                 while(matcher.find()) {
-                    team = Integer.parseInt(matcher.group(1));
-                    teamMember = matcher.group(2);
-                }
-
-                String[] strings = teamMember.split("/");
-                if(strings.length != team) {
-                    channel.sendMessage("team 인원수와 입력받은 인원이 맞지 않습니다. 다시 확인해주세요.").queue();
-                } else {
-                    for (int i = 0; i < team; i++) {
-                        String[] strings1 = strings[i].split(",");
-                        List<String> balance = new ArrayList<>();
-                        balance.add(strings1[0]);
-                        balance.add(strings1[1]);
-                        balanceMap.put(i + 1, balance);
+                    String group = matcher.group(1);
+                    if(group.equals("1")) {
+                        System.out.println("team1 win!");
+                    } else if(group.equals("2")) {
+                        System.out.println("team2 win!");
                     }
-
-                    balanceMap.keySet().forEach(key -> {
-                        List<String> list = balanceMap.get(key);
-                        getTeam(list);
-                    });
-
-                    channel.sendMessage("team 1 = " + team1.toString()).queue();
-                    channel.sendMessage("team 2 = " + team2.toString()).queue();
-
-                    team1.clear();
-                    team2.clear();
                 }
+                System.out.println("team1 = " + team1);
+                System.out.println("team2 = " + team2);
+
+            } else if(content.equals("! 팀")) {
+                channel.sendMessage("team 1 = " + team1.toString()).queue();
+                channel.sendMessage("team 2 = " + team2.toString()).queue();
+            }
+            else if(content.startsWith("! ")) {
+                String[] balancesArray = content.substring(2).split("/");
+                int count = balancesArray.length;
+                Map<Integer, List<String>> balanceMap = new HashMap<>();
+
+                for (int i = 0; i < count; i++) {
+                    String[] strings1 = balancesArray[i].split(",");
+                    List<String> balance = new ArrayList<>();
+                    balance.add(strings1[0].trim());
+                    balance.add(strings1[1].trim());
+                    balanceMap.put(i + 1, balance);
+                }
+                balanceMap.keySet().forEach(key -> {
+                    List<String> list = balanceMap.get(key);
+                    getTeam(list);
+                });
+
+                channel.sendMessage("team 1 = " + team1.toString()).queue();
+                channel.sendMessage("team 2 = " + team2.toString()).queue();
+
+//                team1.clear();
+//                team2.clear();
+
+
             }
         }
     }
@@ -93,5 +102,7 @@ public class Main extends ListenerAdapter {
             team2.add(person1);
         }
     }
+
+
 }
 
