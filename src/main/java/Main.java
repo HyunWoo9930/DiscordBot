@@ -1,3 +1,5 @@
+import com.google.gson.JsonNull;
+import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,9 +20,10 @@ public class Main extends ListenerAdapter {
 
     public static List<String> team1 = new ArrayList<>();
     public static List<String> team2 = new ArrayList<>();
+    public static JsonObject history = new JsonObject();
 
     public static void main(String[] args) {
-        String token = "MTEyMDY5NDUzOTUxNTA4ODk1Ng.GLDLEj.x1aHyC_ig2ERi57iM0HHHbcbHPRPxqzbW38imw";
+        String token = "MTEyMDY5NDUzOTUxNTA4ODk1Ng.GM5mqa.YrClgY1d4ZMPatpq4ITusotBHMVI5JmreU1l9Y";
         JDABuilder builder = JDABuilder.createDefault(token);
         builder.enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT);
         JDA jda = builder.build();
@@ -38,28 +41,49 @@ public class Main extends ListenerAdapter {
 
             Message message = event.getMessage();
             String content = message.getContentRaw();
-            if (content.contains("전적")) {
-                channel.sendMessage("아직 구현되지 않았습니다!").queue();
+            if (content.equals("! 전적")) {
+                // TODO 전적 출력
+                if (history.has("gameCount")) {
+                    int gameCount = history.get("gameCount").getAsInt();
+                    channel.sendMessage("오늘 총 게임 수 : " + gameCount + " 판").queue();
+                    for (String name : history.keySet()) {
+                        if(!name.equals("gameCount")) {
+                            JsonObject inner = history.get(name).getAsJsonObject();
+                            String winCount = inner.get("winCount").getAsString();
+                            String loseCount = inner.get("loseCount").getAsString();
+                            channel.sendMessage(name + " : " + winCount + "승 " + loseCount + "패")
+                                .queue();
+                        }
+                    }
+                } else {
+                    channel.sendMessage("아직 전적이 없습니다!").complete();
+                }
             } else if (content.contains("! 승패")) {
-                System.out.println("content = " + content);
                 Pattern pattern = Pattern.compile("! 승패 팀(\\d) *승");
                 Matcher matcher = pattern.matcher(content);
-                while(matcher.find()) {
-                    String group = matcher.group(1);
-                    if(group.equals("1")) {
-                        System.out.println("team1 win!");
-                    } else if(group.equals("2")) {
-                        System.out.println("team2 win!");
+                if (team1.size() == 0 || team2.size() == 0) {
+                    channel.sendMessage("팀이 만들어지지 않았습니다. 팀을 짜시고 다시 실행해주세요.").queue();
+                } else {
+                    while (matcher.find()) {
+                        String group = matcher.group(1);
+                        if (group.equals("1")) {
+                            saveWinHistory(team1, team2);
+                        } else if (group.equals("2")) {
+                            saveWinHistory(team2, team1);
+                        }
                     }
+                    channel.sendMessage("저장하였습니다.").queue();
+                    team1.clear();
+                    team2.clear();
                 }
-                System.out.println("team1 = " + team1);
-                System.out.println("team2 = " + team2);
-
-            } else if(content.equals("! 팀")) {
-                channel.sendMessage("team 1 = " + team1.toString()).queue();
-                channel.sendMessage("team 2 = " + team2.toString()).queue();
-            }
-            else if(content.startsWith("! ")) {
+            } else if (content.equals("! 팀")) {
+                if (team1.size() == 0 || team2.size() == 0) {
+                    channel.sendMessage("팀이 만들어지지 않았습니다. 팀을 짜시고 다시 실행해주세요.").queue();
+                } else {
+                    channel.sendMessage("team 1 = " + team1.toString()).queue();
+                    channel.sendMessage("team 2 = " + team2.toString()).queue();
+                }
+            } else if (content.startsWith("! ")) {
                 String[] balancesArray = content.substring(2).split("/");
                 int count = balancesArray.length;
                 Map<Integer, List<String>> balanceMap = new HashMap<>();
@@ -82,7 +106,6 @@ public class Main extends ListenerAdapter {
 //                team1.clear();
 //                team2.clear();
 
-
             }
         }
     }
@@ -103,6 +126,39 @@ public class Main extends ListenerAdapter {
         }
     }
 
+    public static void saveWinHistory(List<String> winTeam, List<String> loseTeam) {
+        for (String value : winTeam) {
+            if (history.has(value)) {
+                int winCount = history.get(value).getAsJsonObject().get("winCount").getAsInt() + 1;
+                history.get(value).getAsJsonObject().addProperty("winCount", winCount);
+            } else {
+                JsonObject innerObj = new JsonObject();
+                innerObj.addProperty("winCount", 1);
+                innerObj.addProperty("loseCount", 0);
+                history.add(value, innerObj);
+            }
+        }
+
+        for (String s : loseTeam) {
+            if (history.has(s)) {
+                int loseCount = history.get(s).getAsJsonObject().get("loseCount").getAsInt() + 1;
+                history.get(s).getAsJsonObject().addProperty("loseCount", loseCount);
+            } else {
+                JsonObject innerObj = new JsonObject();
+                innerObj.addProperty("winCount", 0);
+                innerObj.addProperty("loseCount", 1);
+                history.add(s, innerObj);
+            }
+        }
+
+        if (history.has("gameCount")) {
+            int gameCount = history.get("gameCount").getAsInt() + 1;
+            history.addProperty("gameCount", gameCount);
+        } else {
+            history.addProperty("gameCount", 1);
+        }
+
+    }
 
 }
 
