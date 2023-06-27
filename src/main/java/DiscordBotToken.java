@@ -8,4 +8,7 @@ public class DiscordBotToken {
     @Value("${discord.bot.token}")
     private String discordBotToken;
 
+    public String getDiscordBotToken() {
+        return discordBotToken;
+    }
 }

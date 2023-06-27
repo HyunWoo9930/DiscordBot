@@ -24,18 +24,20 @@ public class Main extends ListenerAdapter {
     public static void main(String[] args) {
         DiscordBotToken discordBotToken = new DiscordBotToken();
         JDABuilder builder = JDABuilder.createDefault(discordBotToken.getDiscordBotToken());
-        builder.enableIntents(GatewayIntent.GUILD_MESSAGES, GatewayIntent.DIRECT_MESSAGES, GatewayIntent.MESSAGE_CONTENT);
+        builder.enableIntents(GatewayIntent.DIRECT_MESSAGES, GatewayIntent.GUILD_MESSAGES, GatewayIntent.MESSAGE_CONTENT);
         JDA jda = builder.build();
         jda.addEventListener(new Main());
     }
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
+        if(event.getAuthor().getId().equals(event.getJDA().getSelfUser().getId())) {
+            return;
+        }
         if (event.isFromGuild()) {
             if (!event.getChannel().asTextChannel().getType().isGuild()) {
                 return;
             }
-
             TextChannel channel = event.getChannel().asTextChannel();
 
             Message message = event.getMessage();
@@ -86,8 +88,8 @@ public class Main extends ListenerAdapter {
                 if (team1.size() == 0 || team2.size() == 0) {
                     channel.sendMessage("팀이 만들어지지 않았습니다. 팀을 짜시고 다시 실행해주세요.").queue();
                 } else {
-                    channel.sendMessage("team 1 = " + team1.toString()).queue();
-                    channel.sendMessage("team 2 = " + team2.toString()).queue();
+                    channel.sendMessage("team 1 = " + team1).queue();
+                    channel.sendMessage("team 2 = " + team2).queue();
                 }
             } else if (content.startsWith("! ")) {
                 String[] balancesArray = content.substring(2).split("/");
@@ -108,10 +110,8 @@ public class Main extends ListenerAdapter {
 
                 channel.sendMessage("team 1 = " + team1.toString()).queue();
                 channel.sendMessage("team 2 = " + team2.toString()).queue();
-
-//                team1.clear();
-//                team2.clear();
-
+            } else {
+                channel.sendMessage("제대로 된 명령어를 입력해주세요!\nhelp 명령어를 사용하면 명령어 목록을 확인할 수 있습니다.").queue();
             }
         }
     }
